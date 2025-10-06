@@ -1,13 +1,14 @@
 'use client';
 
-import { SessionProvider } from 'next-auth/react';
+
 import { RecoilRoot } from 'recoil';
+import { FirebaseAuthProvider } from './FirebaseAuthProvider';
 
 const SessionWrapper = ({ children }) => {
   return (
-    <SessionProvider>
+    <FirebaseAuthProvider>
       <RecoilRoot>{children}</RecoilRoot>
-    </SessionProvider>
+    </FirebaseAuthProvider>
   );
 };
 

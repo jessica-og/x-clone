@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn, signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaXTwitter } from 'react-icons/fa6';
 import { HiHome, HiDotsHorizontal } from 'react-icons/hi';
+import { useFirebaseAuth } from './FirebaseAuthProvider';
 
 export default function Sidebar() {
-  const { data: session } = useSession();
+  const { user, login, logout } = useFirebaseAuth();
   const [showDropdown, setShowDropdown] = useState(false);
 
   const handleImageClick = () => setShowDropdown((prev) => !prev);
@@ -29,24 +29,24 @@ export default function Sidebar() {
           <span className="font-bold hidden xl:inline">Home</span>
         </Link>
 
-        {session ? (
+        {user ? (
           <button
             className="bg-blue-400 text-white rounded-full hover:brightness-95 transition-all duration-200 w-48 h-9 shadow-md hidden xl:inline font-semibold"
-            onClick={() => signOut()}
+            onClick={logout}
           >
             Sign Out
           </button>
         ) : (
           <button
             className="bg-blue-400 text-white rounded-full hover:brightness-95 transition-all duration-200 w-48 h-9 shadow-md hidden xl:inline font-semibold"
-            onClick={() => signIn()}
+            onClick={login}
           >
-            Sign In
+            Sign In with Google
           </button>
         )}
       </div>
 
-      {/* Profile / Avatar Section (always visible) */}
+      {/* Profile / Avatar Section */}
       <div className="relative">
         <div
           className="text-gray-700 text-sm flex items-center cursor-pointer p-3 hover:bg-gray-100 rounded-full transition-all duration-200"
@@ -54,8 +54,8 @@ export default function Sidebar() {
         >
           <Image
             src={
-              session?.user?.image ||
-              'https://cdn-icons-png.flaticon.com/512/847/847969.png' // fallback avatar
+              user?.photoURL ||
+              'https://cdn-icons-png.flaticon.com/512/847/847969.png'
             }
             alt="user avatar"
             width={40}
@@ -64,23 +64,22 @@ export default function Sidebar() {
           />
           <div className="hidden xl:inline">
             <h4 className="font-bold">
-              {session ? session.user.name : 'Guest'}
+              {user ? user.displayName : 'Guest'}
             </h4>
             <p className="text-gray-500">
-              {session ? `@${session.user.username}` : 'Not signed in'}
+              {user ? user.email : 'Not signed in'}
             </p>
           </div>
           <HiDotsHorizontal className="h-5 xl:ml-8 hidden xl:inline" />
         </div>
 
-        {/* Dropdown */}
         {showDropdown && (
           <div className="absolute bottom-16 left-3 bg-white shadow-lg rounded-xl p-3 w-40 z-50 border border-gray-100 animate-fade-in">
-            {session ? (
+            {user ? (
               <button
                 className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md"
                 onClick={() => {
-                  signOut();
+                  logout();
                   setShowDropdown(false);
                 }}
               >
@@ -90,11 +89,11 @@ export default function Sidebar() {
               <button
                 className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md"
                 onClick={() => {
-                  signIn();
+                  login();
                   setShowDropdown(false);
                 }}
               >
-                Sign In
+                Sign In with Google
               </button>
             )}
           </div>
