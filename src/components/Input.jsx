@@ -10,12 +10,13 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { app } from '../firebase';
+import Image from 'next/image';
 
 
 export default function Input() {
   const { data: session } = useSession();
-  const [imageFileUrl, setImageFileUrl] = useState(null);
-  const [imagePublicId, setImagePublicId] = useState(null); // 🔹 new state for public_id
+  const [imageFileUrl, setImageFileUrl] = useState(null); 
+  const [imagePublicId, setImagePublicId] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [imageFileUploading, setImageFileUploading] = useState(false);
   const [text, setText] = useState('');
@@ -23,6 +24,7 @@ export default function Input() {
   const imagePickRef = useRef(null);
   const db = getFirestore(app);
 
+  //  Only preview locally — do NOT upload yet
   const addImageToPost = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -31,14 +33,10 @@ export default function Input() {
     }
   };
 
-  useEffect(() => {
-    if (selectedFile) {
-      uploadImageToCloudinary(selectedFile);
-    }
-  }, [selectedFile]);
-
-  // 🔹 Upload Image to Cloudinary
+  // Upload only when the user posts
   const uploadImageToCloudinary = async (file) => {
+    if (!file) return null;
+
     setImageFileUploading(true);
     const formData = new FormData();
     formData.append('file', file);
@@ -55,25 +53,33 @@ export default function Input() {
           body: formData,
         }
       );
-
       const data = await res.json();
+
       if (data.secure_url) {
-        setImageFileUrl(data.secure_url);   
-        setImagePublicId(data.public_id);   
+        return { url: data.secure_url, publicId: data.public_id };
+      } else {
+        console.error('Cloudinary upload failed:', data);
+        return null;
       }
     } catch (error) {
-      console.error('Cloudinary upload failed:', error);
-      setImageFileUrl(null);
-      setImagePublicId(null);
-      setSelectedFile(null);
+      console.error('Cloudinary upload error:', error);
+      return null;
     } finally {
       setImageFileUploading(false);
     }
   };
 
+  //  Handle post submit
   const handleSubmit = async () => {
     if (!session?.user) return;
+    if (!text && !selectedFile) return;
+
     setPostLoading(true);
+
+    let uploadedImage = null;
+    if (selectedFile) {
+      uploadedImage = await uploadImageToCloudinary(selectedFile);
+    }
 
     await addDoc(collection(db, 'posts'), {
       uid: session.user.uid,
@@ -82,27 +88,30 @@ export default function Input() {
       text,
       profileImg: session.user.image,
       timestamp: serverTimestamp(),
-      image: imageFileUrl,
-      imagePublicId: imagePublicId,
+      image: uploadedImage?.url || null,
+      imagePublicId: uploadedImage?.publicId || null,
     });
 
+    // Reset form
     setPostLoading(false);
     setText('');
     setImageFileUrl(null);
     setImagePublicId(null);
     setSelectedFile(null);
-    location.reload();
   };
 
   if (!session) return null;
 
 
+
   return (
     <div className="flex border-b border-gray-200 p-3 space-x-3 w-full">
-      <img
+        <Image
         src={session.user.image}
         alt="user-img"
-        className="h-11 w-11 rounded-full cursor-pointer hover:brightness-95"
+        width={100}
+        height={100}
+        className="rounded-full w-11 h-11 cursor-pointer hover:brightness-95"
       />
       <div className="w-full divide-y divide-gray-200">
         <textarea
@@ -114,6 +123,7 @@ export default function Input() {
         ></textarea>
 
         {selectedFile && (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageFileUrl ?? ''}
             alt="preview"

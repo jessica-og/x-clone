@@ -17,6 +17,7 @@ import {
 const { useSession } = require('next-auth/react');
 import { app } from '../firebase';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function CommentModal() {
   const [open, setOpen] = useRecoilState(modalState);
@@ -77,11 +78,13 @@ export default function CommentModal() {
             </div>
             <div className='p-2 flex items-center space-x-1 relative'>
               <span className='w-0.5 h-full z-[-1] absolute left-8 top-11 bg-gray-300' />
-              <img
-                src={post?.profileImg}
-                alt='user-img'
-                className='h-11 w-11 rounded-full mr-4'
-              />
+                   <Image
+        src={post?.profileImg}
+        alt="user-img"
+        width={44}
+        height={44}
+        className="rounded-full mr-4"
+      />
               <h4 className='font-bold sm:text-[16px] text-[15px] hover:underline truncate'>
                 {post?.name}
               </h4>
@@ -93,11 +96,13 @@ export default function CommentModal() {
               {post?.text}
             </p>
             <div className='flex p-3 space-x-3'>
-              <img
-                src={session.user.image}
-                alt='user-img'
-                className='h-11 w-11 rounded-full cursor-pointer hover:brightness-95'
-              />
+                  <Image
+        src={session.user.image}
+        alt="user-img"
+        width={44}
+        height={44}
+        className="rounded-full cursor-pointer hover:brightness-95"
+      />
               <div className='w-full divide-y divide-gray-200'>
                 <div>
                   <textarea
